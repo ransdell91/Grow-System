@@ -1,0 +1,2108 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!---
+  DESIGN PLAN
+  Layout: Tabbed app shell — sidebar nav on desktop, bottom tab bar on mobile
+  Color: Deep forest greens + warm amber/gold + rich dark soil tones
+  --bg-dark: #0f1a0f  --bg-mid: #1a2e1a  --bg-card: #1f3520
+  --accent: #c8a84b  --accent-muted: #8a6f2e  --green-bright: #4caf6e
+  --text: #e8ead4  --text-muted: #8fa07a  --danger: #d4574a
+  Type: 'Libre Baskerville' (headings — organic, authoritative) + 'Inter' (data/UI)
+-->
+<title>Grow System</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+/* ── TOKEN SYSTEM ──────────────────────────────────────────── */
+:root {
+  --bg:         #f5f7f0;
+  --bg-mid:     #e8ede0;
+  --bg-card:    #ffffff;
+  --bg-raised:  #f0f4e8;
+  --border:     #ccd8be;
+  --accent:     #5a7a2e;
+  --accent-lit: #6e9438;
+  --accent-dim: #3d5420;
+  --gold:       #8a6f2e;
+  --gold-lit:   #c8a84b;
+  --text:       #1a2410;
+  --text-mid:   #3d4f2e;
+  --text-muted: #6b7d5a;
+  --green-ok:   #3a8c55;
+  --warn:       #c07a1a;
+  --danger:     #b83a2e;
+  --radius:     10px;
+  --shadow:     0 2px 12px rgba(0,0,0,0.08);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:         #0c150c;
+    --bg-mid:     #162016;
+    --bg-card:    #1a2d1a;
+    --bg-raised:  #1f3520;
+    --border:     #2a3e2a;
+    --accent:     #7ab84a;
+    --accent-lit: #9ad05e;
+    --accent-dim: #4a7a28;
+    --gold:       #c8a84b;
+    --gold-lit:   #e0c06a;
+    --text:       #dce8cc;
+    --text-mid:   #a8be90;
+    --text-muted: #6a8055;
+    --green-ok:   #4caf6e;
+    --warn:       #d4a030;
+    --danger:     #e05545;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:         #0c150c;
+  --bg-mid:     #162016;
+  --bg-card:    #1a2d1a;
+  --bg-raised:  #1f3520;
+  --border:     #2a3e2a;
+  --accent:     #7ab84a;
+  --accent-lit: #9ad05e;
+  --accent-dim: #4a7a28;
+  --gold:       #c8a84b;
+  --gold-lit:   #e0c06a;
+  --text:       #dce8cc;
+  --text-mid:   #a8be90;
+  --text-muted: #6a8055;
+  --green-ok:   #4caf6e;
+  --warn:       #d4a030;
+  --danger:     #e05545;
+  color-scheme: dark;
+}
+
+/* ── RESET & BASE ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+h1, h2, h3 { font-family: 'Libre Baskerville', Georgia, serif; text-wrap: balance; }
+button { cursor: pointer; font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
+/* ── LAYOUT ────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.main-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+.app-header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 58px;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+}
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.app-logo-icon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.app-logo h1 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.app-logo span {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+.season-badge {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ── SUB-TAB NAV (top of each section) ────────────────────── */
+.sub-tab-nav {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 16px;
+  gap: 2px;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 50;
+}
+.sub-tab-nav::-webkit-scrollbar { display: none; }
+.sub-tab-btn {
+  padding: 11px 16px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.sub-tab-btn:hover { color: var(--text); }
+.sub-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── SECTION / SUB-PANEL VISIBILITY ───────────────────────── */
+.section-panel { display: none; flex-direction: column; flex: 1; }
+.section-panel.active { display: flex; }
+
+/* ── CONTENT AREA ──────────────────────────────────────────── */
+.tab-content { display: none; padding: 20px 16px calc(var(--nav-h) + 20px); max-width: 900px; margin: 0 auto; width: 100%; }
+.tab-content.active { display: block; }
+
+/* ── BOTTOM TAB ISLAND ─────────────────────────────────────── */
+:root { --nav-h: 72px; }
+.bottom-nav-wrap {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  z-index: 200;
+  pointer-events: none;
+}
+.bottom-nav {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.16), 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: stretch;
+  padding: 6px 8px;
+  gap: 4px;
+  pointer-events: all;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 6px;
+  border: none;
+  background: none;
+  border-radius: 14px;
+  transition: background 0.15s, color 0.15s;
+  color: var(--text-muted);
+  min-width: 0;
+}
+.nav-btn:hover { background: var(--bg-raised); color: var(--text); }
+.nav-btn.active { background: var(--accent); color: #fff; }
+.nav-icon { font-size: 20px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
+
+/* ── CARDS ─────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .icon { font-size: 16px; }
+
+/* ── POT GRID ──────────────────────────────────────────────── */
+.pot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.pot-card {
+  background: var(--bg-raised);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.pot-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(90,122,46,0.12); }
+.pot-card.selected { border-color: var(--accent); background: var(--bg-card); box-shadow: 0 0 0 3px rgba(90,122,46,0.15); }
+.pot-emoji { font-size: 28px; margin-bottom: 6px; }
+.pot-name { font-weight: 600; font-size: 12px; color: var(--text); }
+.pot-type { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.pot-week {
+  font-size: 10px;
+  background: var(--accent);
+  color: white;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-top: 6px;
+  display: inline-block;
+  font-weight: 600;
+}
+.pot-tent-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: white;
+}
+.tent-4x4 { background: var(--accent-dim); }
+.tent-3x3 { background: var(--gold); }
+
+/* ── SOIL LAYERS VISUAL ────────────────────────────────────── */
+.soil-diagram {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.soil-layer {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.layer-hf {
+  background: linear-gradient(135deg, #3a5220 0%, #2e4218 100%);
+  color: #c8e0a0;
+}
+.layer-of {
+  background: linear-gradient(135deg, #5a3a10 0%, #4a2e0c 100%);
+  color: #e8c888;
+}
+.layer-icon { font-size: 20px; flex-shrink: 0; }
+.layer-info { min-width: 0; }
+.layer-title { font-weight: 700; font-size: 13px; }
+.layer-sub { font-size: 11px; opacity: 0.75; margin-top: 1px; }
+.layer-pct { margin-left: auto; font-size: 11px; font-weight: 700; opacity: 0.85; flex-shrink: 0; }
+
+/* ── AMENDMENT TABLE ───────────────────────────────────────── */
+.amendment-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.amendment-table th {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.amendment-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+.amendment-table tr:last-child td { border-bottom: none; }
+.amendment-table tr:hover td { background: var(--bg-raised); }
+.dose-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.dose-veg { background: rgba(90,122,46,0.18); color: var(--accent); }
+.dose-flower { background: rgba(138,111,46,0.18); color: var(--gold); }
+.dose-both { background: rgba(58,140,85,0.18); color: var(--green-ok); }
+
+/* ── FEEDING TIMELINE ──────────────────────────────────────── */
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 9px; top: 6px; bottom: 6px;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 18px;
+}
+.timeline-dot {
+  position: absolute;
+  left: -24px; top: 3px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+  flex-shrink: 0;
+}
+.dot-veg { background: var(--accent); }
+.dot-transition { background: var(--gold); }
+.dot-flower { background: var(--warn); }
+.dot-late { background: var(--danger); }
+.dot-stop { background: var(--text-muted); }
+.timeline-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.timeline-body { font-size: 13px; color: var(--text); }
+.timeline-body strong { color: var(--accent); }
+.timeline-note { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+/* ── STAT TILES ────────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.stat-tile {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-family: 'Inter', sans-serif;
+}
+.stat-unit { font-size: 12px; color: var(--text-muted); }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── VPD TABLE ─────────────────────────────────────────────── */
+.vpd-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+.vpd-row { display: contents; }
+.vpd-cell {
+  background: var(--bg-card);
+  padding: 9px 10px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.vpd-header { background: var(--bg-raised); font-weight: 700; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.vpd-stage { background: var(--bg-raised); font-weight: 600; font-size: 11px; text-align: left; padding-left: 12px; }
+.vpd-low { background: rgba(74,122,40,0.12); color: var(--green-ok); font-weight: 700; }
+.vpd-ok { background: rgba(90,122,46,0.20); color: var(--accent); font-weight: 700; }
+.vpd-high { background: rgba(192,122,26,0.15); color: var(--warn); font-weight: 700; }
+.vpd-bad { background: rgba(184,58,46,0.12); color: var(--danger); font-weight: 700; }
+
+/* ── PH RANGE BAR ──────────────────────────────────────────── */
+.ph-bar-wrap { margin: 12px 0; }
+.ph-bar-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+.ph-bar {
+  height: 20px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #d4574a 0%, #e0a030 25%, #4caf6e 40%, #4caf6e 70%, #e0a030 82%, #d4574a 100%);
+  position: relative;
+  overflow: visible;
+}
+.ph-marker {
+  position: absolute;
+  top: -5px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ph-pin {
+  width: 3px; height: 30px;
+  background: var(--text);
+  border-radius: 2px;
+}
+.ph-val {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ph-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── CHECKLIST ─────────────────────────────────────────────── */
+.week-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.week-selector label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.week-selector select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.checklist { list-style: none; }
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.check-item:last-child { border-bottom: none; }
+.check-item input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+}
+.check-item label { font-size: 13px; color: var(--text); cursor: pointer; flex: 1; min-width: 0; }
+.check-item label .sub { font-size: 11px; color: var(--text-muted); display: block; margin-top: 1px; }
+.check-item.checked label { color: var(--text-muted); text-decoration: line-through; }
+.check-item.checked { opacity: 0.65; }
+.check-tag {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.tag-both { background: rgba(74,175,110,0.15); color: var(--green-ok); }
+.tag-auto { background: rgba(200,168,75,0.2); color: var(--gold); }
+.tag-photo { background: rgba(90,122,46,0.18); color: var(--accent); }
+
+/* ── SECTION HEADERS ───────────────────────────────────────── */
+.section-head {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 18px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.section-head:first-child { margin-top: 0; }
+
+/* ── ALERT ─────────────────────────────────────────────────── */
+.alert {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.alert-warn { background: rgba(192,122,26,0.12); border: 1px solid rgba(192,122,26,0.3); color: var(--warn); }
+.alert-info { background: rgba(90,122,46,0.10); border: 1px solid rgba(90,122,46,0.25); color: var(--accent); }
+.alert-danger { background: rgba(184,58,46,0.10); border: 1px solid rgba(184,58,46,0.25); color: var(--danger); }
+.alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert-body { color: var(--text); }
+.alert-body strong { color: inherit; }
+
+/* ── LIGHT SCHEDULE TABLE ──────────────────────────────────── */
+.light-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.light-table th, .light-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.light-table th { background: var(--bg-raised); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+.light-table tr:last-child td { border-bottom: none; }
+.light-table tr:hover td { background: var(--bg-raised); }
+.pct-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pct-fill {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+.pct-text { font-size: 11px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 30px; }
+
+/* ── LOG TAB ───────────────────────────────────────────────── */
+.log-form { display: flex; flex-direction: column; gap: 10px; }
+.log-form-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.log-form input, .log-form select, .log-form textarea {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.log-form input:focus, .log-form select:focus, .log-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(90,122,46,0.12);
+}
+.log-form textarea { resize: vertical; min-height: 60px; }
+.log-form input[type="date"] { flex: 1; min-width: 130px; }
+.btn {
+  padding: 9px 18px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.88; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.log-entries { margin-top: 14px; }
+.log-entry {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: var(--bg-card);
+}
+.log-entry-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.log-date { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.log-plant { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 8px; background: rgba(90,122,46,0.15); color: var(--accent); }
+.log-type-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 6px; }
+.log-water { background: rgba(74,122,160,0.15); color: #4a7aa0; }
+.log-feed { background: rgba(138,111,46,0.15); color: var(--gold); }
+.log-note-log { background: rgba(74,175,110,0.12); color: var(--green-ok); }
+.log-text { font-size: 13px; color: var(--text); }
+
+/* ── HARVEST COUNTDOWN ─────────────────────────────────────── */
+.harvest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.harvest-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.harvest-plant { font-weight: 700; font-size: 13px; margin-bottom: 8px; color: var(--text); }
+.harvest-days {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  font-family: 'Inter', sans-serif;
+}
+.harvest-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.harvest-bar-wrap { margin-top: 10px; }
+.harvest-progress {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.harvest-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+
+/* ── CALENDAR ──────────────────────────────────────────────── */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.cal-nav h2 { font-size: 16px; }
+.cal-nav-btn {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cal-nav-btn:hover { background: var(--bg-mid); }
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 14px;
+}
+.cal-dow {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+.cal-day {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 68px;
+  padding: 5px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+}
+.cal-day:hover { border-color: var(--accent); }
+.cal-day.today { border-color: var(--accent); background: var(--bg-raised); }
+.cal-day.today .cal-day-num { color: var(--accent); font-weight: 800; }
+.cal-day.other-month { opacity: 0.35; }
+.cal-day.selected { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,168,75,0.25); }
+.cal-day-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.cal-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-height: 40px;
+  overflow: hidden;
+}
+.cal-dot {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.dot-water  { background: rgba(74,122,160,0.2);  color: #4a7aa0; }
+.dot-feed   { background: rgba(138,111,46,0.25); color: var(--gold); }
+.dot-check  { background: rgba(90,122,46,0.18);  color: var(--accent); }
+.dot-event  { background: rgba(200,80,60,0.18);  color: var(--danger); }
+.dot-recharge { background: rgba(74,175,110,0.18); color: var(--green-ok); }
+
+.cal-detail {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 80px;
+}
+.cal-detail-date { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; }
+.cal-detail-empty { font-size: 13px; color: var(--text-muted); font-style: italic; }
+.cal-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cal-task:last-child { border-bottom: none; }
+.cal-task-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.cal-task-body { min-width: 0; }
+.cal-task-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.cal-task-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 11px;
+}
+
+/* ── REUSE BANNER ──────────────────────────────────────────── */
+.reuse-banner {
+  background: var(--bg-raised);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 14px;
+}
+.reuse-banner strong { color: var(--accent); }
+
+</style>
+
+<div class="app-shell">
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="app-logo-icon">🌿</div>
+      <div>
+        <h1>Grow System</h1>
+        <span>Humboldt Farms Indoor</span>
+      </div>
+    </div>
+    <div class="season-badge" id="season-label">Season 1 · Oct 2026</div>
+  </header>
+
+  <div class="main-scroll">
+
+  <!-- ══ SECTION: PLANTS ══ -->
+  <div class="section-panel active" id="sec-plants">
+    <nav class="sub-tab-nav">
+      <button class="sub-tab-btn active" onclick="switchSub('plants','plants')">🌱 Plants</button>
+      <button class="sub-tab-btn" onclick="switchSub('plants','soil')">🪱 Soil Guide</button>
+    </nav>
+
+  <!-- ══ PLANTS TAB ══ -->
+  <div class="tab-content active" id="tab-plants">
+
+    <div class="section-head">Current Run — 6 Plants</div>
+
+    <div class="pot-grid" id="pot-grid">
+      <!-- generated by JS -->
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📅</span> Harvest Countdowns</div>
+      <div class="harvest-grid" id="harvest-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🏕️</span> Tent Assignments</div>
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <div class="alert-body">
+          <strong>Phase 1 (Now – ~Nov 16):</strong> All 6 plants in the 3×3 / 250w at 18/6.
+          <br><strong>Phase 2 (~Nov 16):</strong> Move photos to 3×3 / 250w. Flip 4×4 to 12/12 for autos.
+          <br><strong>Phase 3 (~Dec 28+):</strong> After auto harvest, photos move to 4×4 / 480w and flip to 12/12.
+        </div>
+      </div>
+      <table class="light-table" style="width:100%">
+        <thead><tr><th>Tent</th><th>Light</th><th>Schedule</th><th>Plants</th></tr></thead>
+        <tbody>
+          <tr><td>4×4</td><td>480w</td><td>18/6 → 12/12</td><td>All 6 → Autos → Photos</td></tr>
+          <tr><td>3×3</td><td>250w</td><td>18/6</td><td>Photos (holding veg ~wk 5–11)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="reuse-banner">
+      ♻️ <strong>Reusable:</strong> At season end, re-amend soil and start a new run. This system tracks each season independently.
+    </div>
+  </div>
+
+  <!-- ══ SOIL TAB ══ -->
+  <div class="tab-content" id="tab-soil">
+
+    <div class="section-head">Dual Layer Method — Why It Works</div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">🧬</span>
+      <div class="alert-body">
+        Happy Frog on top = gentle, microbe-rich zone seedlings start in. Ocean Forest below = hot, nutrient-dense zone mature roots tap into. The plant self-selects the right zone at each life stage.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🪣</span> Pot Setup — Layer Ratios</div>
+
+      <div class="soil-diagram">
+        <div class="soil-layer" style="border-bottom: 2px solid rgba(0,0,0,0.2);">
+          <span class="layer-icon">🐸</span>
+          <div class="layer-info">
+            <div class="layer-title">TOP — Happy Frog</div>
+            <div class="layer-sub">~40% of pot volume · Seedlings & early roots</div>
+            <div class="layer-sub" style="margin-top:4px">pH 6.2–6.8 · Microbe-inoculated · Won't burn</div>
+          </div>
+          <div class="layer-pct">40%</div>
+        </div>
+        <div class="soil-layer">
+          <span class="layer-icon">🌊</span>
+          <div class="layer-info">
+            <div class="layer-title">BOTTOM — Ocean Forest</div>
+            <div class="layer-sub">~60% of pot volume · Deep root zone</div>
+            <div class="layer-sub" style="margin-top:4px">pH 6.3–6.8 · Earthworm castings, bat guano, fish/crab meal</div>
+          </div>
+          <div class="layer-pct">60%</div>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top:0">Perlite Addition</div>
+      <p style="font-size:13px; color:var(--text-mid); margin-bottom:10px">
+        Mix <strong>20–25% perlite</strong> into each layer before stacking. This is the most important structural decision — prevents compaction, improves drainage, and keeps the root zone aerobic.
+      </p>
+      <div class="stat-row">
+        <div class="stat-tile"><div class="stat-val">25%</div><div class="stat-label">Perlite in HF layer</div></div>
+        <div class="stat-tile"><div class="stat-val">20%</div><div class="stat-label">Perlite in OF layer</div></div>
+        <div class="stat-tile"><div class="stat-val">6.2</div><div class="stat-unit">–6.8</div><div class="stat-label">Target pH (soil)</div></div>
+        <div class="stat-tile"><div class="stat-val">5–7</div><div class="stat-unit">gal</div><div class="stat-label">Final pot size</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">⚗️</span> Soil pH — Nutrient Availability</div>
+      <div class="ph-bar-wrap">
+        <div class="ph-bar-label">pH Scale 5.0 → 8.0</div>
+        <div class="ph-bar">
+          <!-- markers at 6.2 and 6.8 -->
+          <div class="ph-marker" style="left: calc((6.2-5.0)/3.0 * 100%)">
+            <div class="ph-val">6.2</div>
+            <div class="ph-pin"></div>
+          </div>
+          <div class="ph-marker" style="left: calc((6.8-5.0)/3.0 * 100%)">
+            <div class="ph-pin"></div>
+            <div class="ph-val" style="margin-top:0;margin-bottom:2px">6.8</div>
+          </div>
+        </div>
+        <div class="ph-scale">
+          <span>5.0</span><span>5.5</span><span>6.0</span><span>6.5</span><span>7.0</span><span>7.5</span><span>8.0</span>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted)">
+        N, P, K, Ca, Mg, Fe all available optimally between <strong>6.2–6.8</strong>. Below 6.0 → Fe/Mn toxicity risk. Above 7.0 → P lockout and Fe deficiency. Water your soil in at 6.3–6.5 every time.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🧫</span> Soil Biology — What to Add</div>
+      <table class="amendment-table">
+        <thead><tr><th>Product</th><th>When</th><th>How</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Recharge</strong><br><span style="font-size:11px;color:var(--text-muted)">Real Growers</span></td>
+            <td>Every 7–10 days</td>
+            <td>½ tsp / gal water, water in</td>
+            <td>Mycorrhizae, trichoderma, billions of microbes — feeds the soil food web that unlocks your dry amendments</td>
+          </tr>
+          <tr>
+            <td><strong>Worm Castings</strong></td>
+            <td>At transplant + top dress</td>
+            <td>10–15% by volume in mix, or ¼ cup top dress monthly</td>
+            <td>Gentle nutrients, microbial diversity, disease suppression, improves soil structure</td>
+          </tr>
+          <tr>
+            <td><strong>Mycorrhizae</strong><br><span style="font-size:11px;color:var(--text-muted)">Great White / Dynomyco</span></td>
+            <td>At transplant only</td>
+            <td>Dust on exposed roots before dropping in pot</td>
+            <td>Extends root surface area up to 700× — critical for nutrient/water uptake efficiency</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔄</span> Re-Amendment Between Seasons</div>
+      <p style="font-size:13px;color:var(--text-mid);margin-bottom:12px">After harvest, your soil is depleted but the biology is established. Re-amend instead of replacing:</p>
+      <ol style="font-size:13px;color:var(--text-mid);padding-left:18px;line-height:2">
+        <li>Remove top 2" of old soil (root debris, old top dress)</li>
+        <li>Mix in <strong>3 tbsp / gal of 4-4-4</strong> through the remaining soil</li>
+        <li>Add <strong>10–15% fresh worm castings</strong> by volume</li>
+        <li>Top with 2" fresh Happy Frog</li>
+        <li>Water in with Recharge 3 days before planting</li>
+      </ol>
+    </div>
+  </div>
+
+  </div><!-- /sec-plants -->
+
+  <!-- ══ SECTION: CARE ══ -->
+  <div class="section-panel" id="sec-care">
+    <nav class="sub-tab-nav">
+      <button class="sub-tab-btn active" onclick="switchSub('care','feeding')">🧪 Feeding</button>
+      <button class="sub-tab-btn" onclick="switchSub('care','environment')">🌡️ Environment</button>
+      <button class="sub-tab-btn" onclick="switchSub('care','lights')">💡 Lights</button>
+    </nav>
+
+  <!-- ══ FEEDING TAB ══ -->
+  <div class="tab-content active" id="tab-feeding">
+
+    <div class="section-head">Your Amendments</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🧪</span> Amendment Overview</div>
+      <table class="amendment-table">
+        <thead><tr><th>Amendment</th><th>NPK</th><th>Role</th><th>Stage</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>All Purpose 4-4-4</strong></td>
+            <td>4-4-4</td>
+            <td>Balanced veg growth, soil builder, pre-charge</td>
+            <td><span class="dose-pill dose-veg">Veg</span></td>
+          </tr>
+          <tr>
+            <td><strong>Power Bloom 2-8-4</strong></td>
+            <td>2-8-4</td>
+            <td>High P/K for bud development, reduces N to prevent foxtailing</td>
+            <td><span class="dose-pill dose-flower">Flower</span></td>
+          </tr>
+          <tr>
+            <td><strong>Worm Castings</strong></td>
+            <td>~1-0-0</td>
+            <td>Biology, micronutrients, soil structure — used alongside both</td>
+            <td><span class="dose-pill dose-both">Both</span></td>
+          </tr>
+          <tr>
+            <td><strong>Recharge</strong></td>
+            <td>—</td>
+            <td>Microbial inoculant — activates and feeds the amendments</td>
+            <td><span class="dose-pill dose-both">Both</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-head">Complete Feeding Timeline</div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">⏱️</span> Dosing by Stage — Per Gallon of Soil</div>
+      <div class="alert alert-warn" style="margin-bottom:14px">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-body">
+          <strong>Ocean Forest is pre-charged for 4–6 weeks.</strong> Do NOT add 4-4-4 at transplant. Wait for plant to show early hunger signs (slight lightening of lower leaves) before first top dress. Happy Frog is gentler — light feeding can start at week 3.
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot dot-veg"></div>
+          <div class="timeline-label">Week 0–2 — Seedling</div>
+          <div class="timeline-body">No amendments. Plain pH'd water at <strong>6.3–6.5</strong>. FFOF and HF have enough. Let the soil biology establish.</div>
+          <div class="timeline-note">Recharge at ½ tsp/gal is fine from week 1</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot dot-veg"></div>
+          <div class="timeline-label">Week 3–4 — Early Veg</div>
+          <div class="timeline-body">First top dress if showing hunger: <strong>1 tbsp 4-4-4 per gallon of soil</strong>. Work lightly into top ½" and water in. Add ¼ cup worm castings on top.</div>
+          <div class="timeline-note">Signs of hunger: yellowing lower leaves, slow node spacing</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot dot-veg"></div>
+          <div class="timeline-label">Week 5–6 — Peak Veg</div>
+          <div class="timeline-body">Second top dress: <strong>1–1.5 tbsp 4-4-4 per gallon</strong>. Plants are vigorous now and can handle more. Continue Recharge weekly.</div>
+          <div class="timeline-note">This is your big veg push — support it with adequate nitrogen</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot dot-transition"></div>
+          <div class="timeline-label">Week 7 — Pre-Flip (1 week before 12/12)</div>
+          <div class="timeline-body">Transition top dress: <strong>50/50 blend — 1 tbsp 4-4-4 + 1 tbsp 2-8-4 per gallon</strong>. Signals the shift without abruptly dropping nitrogen during stretch.</div>
+          <div class="timeline-note">Do this top dress 7–10 days before flipping the light schedule</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot dot-flower"></div>
+          <div class="timeline-label">Week 8–9 — Early Flower / Stretch</div>
+          <div class="timeline-body">Switch to pure bloom: <strong>1 tbsp 2-8-4 per gallon</strong>. This feeds the stretch and early bud site formation. Continue worm castings.</div>
+          <div class="timeline-note">Watch for nitrogen excess — deep green, clawing leaves = back off N</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot dot-flower"></div>
+          <div class="timeline-label">Week 10–11 — Mid Flower</div>
+          <div class="timeline-body">Final top dress: <strong>1 tbsp 2-8-4 per gallon</strong>. This is your last amendment — needs 4–5 weeks to fully break down before harvest.</div>
+          <div class="timeline-note">Do not top dress after this point — excess N in late flower = harsh smoke</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot dot-late"></div>
+          <div class="timeline-label">Week 12–14 — Late Flower</div>
+          <div class="timeline-body">Water only. pH 6.3–6.5. Let the soil fully feed the plant from the breakdown happening below. Recharge can continue through week 13.</div>
+          <div class="timeline-note">Trichomes going cloudy → amber. Watch closely with a loupe</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot dot-stop"></div>
+          <div class="timeline-label">Week 14–16 — Final Flush (Optional)</div>
+          <div class="timeline-body">If using organic dry amendments and good biology, a true flush is <em>optional</em> — the microbes naturally deplete the soil. If flushing: 2–3 plain waterings before harvest.</div>
+          <div class="timeline-note">2-day dark period → harvest → hang at 60–65°F / 55–62% RH</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📐</span> Quick Dose Reference — 5-Gallon Pot</div>
+      <table class="amendment-table">
+        <thead><tr><th>Stage</th><th>4-4-4</th><th>2-8-4</th><th>Castings</th></tr></thead>
+        <tbody>
+          <tr><td>Week 3–4 (first feed)</td><td>5 tbsp</td><td>—</td><td>¼ cup</td></tr>
+          <tr><td>Week 5–6 (veg push)</td><td>7 tbsp</td><td>—</td><td>¼ cup</td></tr>
+          <tr><td>Week 7 (pre-flip)</td><td>5 tbsp</td><td>5 tbsp</td><td>¼ cup</td></tr>
+          <tr><td>Week 8–9 (early flower)</td><td>—</td><td>5 tbsp</td><td>¼ cup</td></tr>
+          <tr><td>Week 10–11 (mid flower, final)</td><td>—</td><td>5 tbsp</td><td>—</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:8px">5 tbsp = 1 tbsp × 5 gallons. Adjust proportionally for pot size. Always water in thoroughly after top dressing.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">💧</span> Watering Protocol</div>
+      <ul style="font-size:13px;color:var(--text-mid);line-height:2;padding-left:18px">
+        <li>Always pH to <strong>6.3–6.5</strong> before watering</li>
+        <li>Water when top 1–2" of soil is dry — lift the pot; lightweight = water time</li>
+        <li>Water to <strong>10–15% runoff</strong> each session to prevent salt buildup</li>
+        <li>Let soil dry slightly between waterings — wet/dry cycles strengthen roots</li>
+        <li>Add Recharge at ½ tsp/gal every 7–10 days (not every watering)</li>
+        <li><strong>Never water seedlings to runoff</strong> — small amounts in a ring around the stem</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ ENVIRONMENT TAB ══ -->
+  <div class="tab-content" id="tab-environment">
+
+    <div class="section-head">Stage-by-Stage Targets</div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🌡️</span> Temp, Humidity & VPD by Stage</div>
+      <div style="overflow-x:auto">
+        <table class="amendment-table" style="min-width:480px">
+          <thead><tr><th>Stage</th><th>Temp (°F)</th><th>RH %</th><th>VPD (kPa)</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Seedling</strong></td><td>75–80</td><td>65–70</td><td>0.6–0.8</td><td>Humidity dome; roots drinking through leaves</td></tr>
+            <tr><td><strong>Early Veg</strong></td><td>75–82</td><td>60–65</td><td>0.9–1.0</td><td>Begin ramping light; LST starts</td></tr>
+            <tr><td><strong>Peak Veg</strong></td><td>76–82</td><td>55–60</td><td>1.0–1.1</td><td>Strong growth; top dress feeding</td></tr>
+            <tr><td><strong>Stretch/Transition</strong></td><td>74–80</td><td>52–58</td><td>1.0–1.2</td><td>Plants stretching 50–100% of height</td></tr>
+            <tr><td><strong>Early Flower</strong></td><td>72–78</td><td>50–55</td><td>1.1–1.3</td><td>Bud sites locking in; watch canopy</td></tr>
+            <tr><td><strong>Mid Flower</strong></td><td>70–76</td><td>48–52</td><td>1.2–1.4</td><td>Trichome development; critical humidity drop</td></tr>
+            <tr><td><strong>Late Flower</strong></td><td>68–74</td><td>42–48</td><td>1.3–1.5</td><td>Dense buds = mold risk; push RH down</td></tr>
+            <tr><td><strong>Pre-Harvest Dark</strong></td><td>65–72</td><td>45–55</td><td>—</td><td>48-hr darkness; terpene preservation</td></tr>
+            <tr><td><strong>Dry Tent</strong></td><td>60–65</td><td>55–62</td><td>—</td><td>Slow dry 10–14 days; no direct airflow on buds</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> VPD Temp/RH Calculator</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Hit your VPD target by finding the right temp+RH combo. ~1.1 kPa is the sweet spot for most of veg and early flower.</p>
+      <div class="vpd-grid" style="grid-template-columns: 70px repeat(7, 1fr);">
+        <div class="vpd-cell vpd-header" style="text-align:left;padding-left:10px">Temp °F</div>
+        <div class="vpd-cell vpd-header">45%</div>
+        <div class="vpd-cell vpd-header">50%</div>
+        <div class="vpd-cell vpd-header">55%</div>
+        <div class="vpd-cell vpd-header">60%</div>
+        <div class="vpd-cell vpd-header">65%</div>
+        <div class="vpd-cell vpd-header">70%</div>
+        <div class="vpd-cell vpd-header">75%</div>
+        <!-- 68°F -->
+        <div class="vpd-cell vpd-stage">68°F</div>
+        <div class="vpd-cell vpd-low">1.31</div>
+        <div class="vpd-cell vpd-ok">1.19</div>
+        <div class="vpd-cell vpd-ok">1.07</div>
+        <div class="vpd-cell vpd-ok">0.95</div>
+        <div class="vpd-cell vpd-low">0.83</div>
+        <div class="vpd-cell vpd-low">0.71</div>
+        <div class="vpd-cell vpd-low">0.60</div>
+        <!-- 72°F -->
+        <div class="vpd-cell vpd-stage">72°F</div>
+        <div class="vpd-cell vpd-high">1.44</div>
+        <div class="vpd-cell vpd-low">1.31</div>
+        <div class="vpd-cell vpd-ok">1.18</div>
+        <div class="vpd-cell vpd-ok">1.05</div>
+        <div class="vpd-cell vpd-ok">0.91</div>
+        <div class="vpd-cell vpd-low">0.78</div>
+        <div class="vpd-cell vpd-low">0.65</div>
+        <!-- 75°F -->
+        <div class="vpd-cell vpd-stage">75°F</div>
+        <div class="vpd-cell vpd-high">1.54</div>
+        <div class="vpd-cell vpd-high">1.40</div>
+        <div class="vpd-cell vpd-ok">1.26</div>
+        <div class="vpd-cell vpd-ok">1.12</div>
+        <div class="vpd-cell vpd-ok">0.98</div>
+        <div class="vpd-cell vpd-low">0.84</div>
+        <div class="vpd-cell vpd-low">0.70</div>
+        <!-- 78°F -->
+        <div class="vpd-cell vpd-stage">78°F</div>
+        <div class="vpd-cell vpd-bad">1.65</div>
+        <div class="vpd-cell vpd-high">1.50</div>
+        <div class="vpd-cell vpd-ok">1.35</div>
+        <div class="vpd-cell vpd-ok">1.20</div>
+        <div class="vpd-cell vpd-ok">1.05</div>
+        <div class="vpd-cell vpd-ok">0.90</div>
+        <div class="vpd-cell vpd-low">0.75</div>
+        <!-- 82°F -->
+        <div class="vpd-cell vpd-stage">82°F</div>
+        <div class="vpd-cell vpd-bad">1.80</div>
+        <div class="vpd-cell vpd-bad">1.64</div>
+        <div class="vpd-cell vpd-high">1.47</div>
+        <div class="vpd-cell vpd-ok">1.31</div>
+        <div class="vpd-cell vpd-ok">1.14</div>
+        <div class="vpd-cell vpd-ok">0.98</div>
+        <div class="vpd-cell vpd-low">0.81</div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;font-size:11px">
+        <span><span class="dose-pill vpd-low" style="display:inline">Low</span> &lt;0.9 kPa</span>
+        <span><span class="dose-pill vpd-ok" style="display:inline;background:rgba(90,122,46,0.2);color:var(--accent)">Target</span> 0.9–1.3</span>
+        <span><span class="dose-pill vpd-high" style="display:inline;background:rgba(192,122,26,0.15);color:var(--warn)">High</span> 1.3–1.5</span>
+        <span><span class="dose-pill vpd-bad" style="display:inline;background:rgba(184,58,46,0.12);color:var(--danger)">Danger</span> &gt;1.5</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">⚠️</span> Deficiency Quick Reference</div>
+      <table class="amendment-table">
+        <thead><tr><th>Symptom</th><th>Likely Cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>Yellow lower leaves, slow growth</td><td>Nitrogen deficiency (hungry)</td><td>Top dress 4-4-4; check pH first</td></tr>
+          <tr><td>Dark green, clawing downward</td><td>Nitrogen toxicity (overfeeding N)</td><td>Skip next amendment; flush lightly</td></tr>
+          <tr><td>Brown crispy tips, margins</td><td>Potassium deficiency or nutrient burn</td><td>Check pH (most common cause); reduce amendment dose</td></tr>
+          <tr><td>Interveinal yellowing (new growth)</td><td>Iron or Manganese def — pH too high</td><td>Bring pH down to 6.2–6.4; add cal-mag if needed</td></tr>
+          <tr><td>Purple stems, dark coloring</td><td>Phosphorus deficiency or cold stress</td><td>Check temp (below 65°F = P lockout); adjust pH</td></tr>
+          <tr><td>Spots, mosaic pattern on leaves</td><td>Calcium deficiency or pests</td><td>Add worm castings; inspect for spider mites</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ LIGHTS TAB ══ -->
+  <div class="tab-content" id="tab-lights">
+
+    <div class="section-head">3×3 / 250w — All Plants: Seedling → Veg → Photos Holding</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">💡</span> 3×3 Tent — 250w LED (All 6 plants start here)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">All 6 plants start in the 3×3 under the 250w. 27.8w/sq ft — plenty for seedling and full veg. At ~wk 5 when autos show pre-flowers, autos move to the 4×4 for 12/12 and photos stay here.</p>
+      <table class="light-table">
+        <thead><tr><th>Stage</th><th>Who</th><th>Intensity</th><th>Height</th><th>Schedule</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Seedling (wk 1–2)</td>
+            <td>All 6</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:25%"></div><span class="pct-text">20–25%</span></div></td>
+            <td>26–30"</td>
+            <td>18/6</td>
+          </tr>
+          <tr>
+            <td>Early Veg (wk 3–4)</td>
+            <td>All 6</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:45%"></div><span class="pct-text">40–50%</span></div></td>
+            <td>22–24"</td>
+            <td>18/6</td>
+          </tr>
+          <tr>
+            <td>Peak Veg / Pre-Split (wk 5)</td>
+            <td>All 6</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:65%"></div><span class="pct-text">60–70%</span></div></td>
+            <td>18–22"</td>
+            <td>18/6</td>
+          </tr>
+          <tr>
+            <td>Photos holding veg (wk 5–11)</td>
+            <td>Photos only</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:68%"></div><span class="pct-text">65–70%</span></div></td>
+            <td>18–22"</td>
+            <td>18/6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-head">4×4 / 480w — Autos Flower → Photos Final Flower</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">💡</span> 4×4 Tent — 480w LED (Autos move here at ~wk 5 flip)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">30w/sq ft at 100%. Autos move here when flipped to 12/12 (~wk 5). After auto harvest, photos move here for their 12/12 flower run. Use dimmer to ramp by stage.</p>
+      <table class="light-table">
+        <thead><tr><th>Stage</th><th>Who</th><th>Intensity</th><th>Height</th><th>PPFD (est.)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Transition/Stretch (auto wk 1–3 flower)</td>
+            <td>Autos</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:80%"></div><span class="pct-text">75–85%</span></div></td>
+            <td>16–20"</td>
+            <td>~750 µmol</td>
+          </tr>
+          <tr>
+            <td>Mid Flower (auto wk 4–7 flower)</td>
+            <td>Autos</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:90%"></div><span class="pct-text">85–95%</span></div></td>
+            <td>14–18"</td>
+            <td>~900 µmol</td>
+          </tr>
+          <tr>
+            <td>Late Flower / Harvest (auto wk 8–11)</td>
+            <td>Autos</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:100%"></div><span class="pct-text">100%</span></div></td>
+            <td>14–16"</td>
+            <td>~1000+ µmol</td>
+          </tr>
+          <tr>
+            <td>Photo Flower — Stretch + Mid (wk 1–7)</td>
+            <td>Photos</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:85%"></div><span class="pct-text">80–90%</span></div></td>
+            <td>16–20"</td>
+            <td>~800–900 µmol</td>
+          </tr>
+          <tr>
+            <td>Photo Flower — Late (wk 8+)</td>
+            <td>Photos</td>
+            <td><div class="pct-bar"><div class="pct-fill" style="width:100%"></div><span class="pct-text">100%</span></div></td>
+            <td>14–16"</td>
+            <td>~1000+ µmol</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">⏰</span> Light Schedule Flip Calendar</div>
+      <table class="light-table">
+        <thead><tr><th>Date</th><th>Event</th><th>Tent</th><th>Schedule</th></tr></thead>
+        <tbody>
+          <tr><td>Oct 12</td><td>Seeds sprouting — all 6 together</td><td>3×3</td><td>18/6</td></tr>
+          <tr><td>~Nov 16</td><td>Autos move to 4×4 for 12/12 flip; photos stay in 3×3</td><td>Both</td><td>18/6 → split</td></tr>
+          <tr><td>~Nov 16</td><td><strong>Flip 4×4 to 12/12</strong> for autos</td><td>4×4</td><td>12/12 🔴</td></tr>
+          <tr><td>~Dec 28</td><td>Auto harvest; move photos to 4×4</td><td>4×4</td><td>—</td></tr>
+          <tr><td>~Dec 28</td><td><strong>Flip 4×4 to 12/12</strong> for photos</td><td>4×4</td><td>12/12 🔴</td></tr>
+          <tr><td>~Feb 15–22</td><td>Photo harvest window</td><td>4×4</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert-warn">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body">
+        <strong>Light burn watch:</strong> During auto stretch (wk 5–8 of flower), plants can grow 2–3" overnight. Check canopy-to-light distance every 2 days and raise the fixture as needed. Bleached or upward-curling tops near the light = too close.
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /sec-care -->
+
+  <!-- ══ SECTION: TASKS ══ -->
+  <div class="section-panel" id="sec-tasks">
+    <nav class="sub-tab-nav">
+      <button class="sub-tab-btn active" onclick="switchSub('tasks','checklist')">✅ Weekly Tasks</button>
+      <button class="sub-tab-btn" onclick="switchSub('tasks','calendar')">📅 Calendar</button>
+    </nav>
+
+  <!-- ══ CHECKLIST TAB ══ -->
+  <div class="tab-content active" id="tab-checklist">
+    <div class="week-selector">
+      <label for="week-select">Grow Week:</label>
+      <select id="week-select" onchange="renderChecklist()">
+        <option value="1">Week 1–2 (Seedling)</option>
+        <option value="3">Week 3–4 (Early Veg)</option>
+        <option value="5">Week 5–6 (Peak Veg)</option>
+        <option value="7">Week 7 (Pre-Flip)</option>
+        <option value="8">Week 8–9 (Early Flower)</option>
+        <option value="10">Week 10–11 (Mid Flower)</option>
+        <option value="12">Week 12–14 (Late Flower)</option>
+        <option value="15">Week 14+ (Harvest Window)</option>
+      </select>
+    </div>
+    <div id="checklist-container"></div>
+  </div>
+
+  <!-- ══ CALENDAR TAB ══ -->
+  <div class="tab-content" id="tab-calendar">
+
+    <div class="cal-legend">
+      <span><span class="cal-dot dot-water" style="display:inline-block">💧</span> Water</span>
+      <span><span class="cal-dot dot-feed" style="display:inline-block">🧪</span> Feeding</span>
+      <span><span class="cal-dot dot-recharge" style="display:inline-block">🦠</span> Recharge</span>
+      <span><span class="cal-dot dot-check" style="display:inline-block">🔍</span> Check</span>
+      <span><span class="cal-dot dot-event" style="display:inline-block">⚡</span> Key Event</span>
+    </div>
+
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calPrev()">← Prev</button>
+      <h2 id="cal-month-label" style="font-family:'Libre Baskerville',serif"></h2>
+      <button class="cal-nav-btn" onclick="calNext()">Next →</button>
+    </div>
+
+    <div class="cal-grid" id="cal-grid">
+      <!-- rendered by JS -->
+    </div>
+
+    <div class="card" style="margin-bottom:0">
+      <div class="cal-detail-date" id="cal-detail-date">Click a day to see tasks</div>
+      <div id="cal-detail-body"><p class="cal-detail-empty">Select a date on the calendar above.</p></div>
+    </div>
+
+  </div>
+
+  </div><!-- /sec-tasks -->
+
+  <!-- ══ SECTION: LOG ══ -->
+  <div class="section-panel" id="sec-log">
+
+  <!-- ══ LOG TAB ══ -->
+  <div class="tab-content active" id="tab-log">
+    <div class="card">
+      <div class="card-title"><span class="icon">✍️</span> Add Entry</div>
+      <div class="log-form">
+        <div class="log-form-row">
+          <input type="date" id="log-date">
+          <select id="log-plant" style="flex:1;min-width:120px">
+            <option value="All">All Plants</option>
+            <option value="Auto 1">Auto 1</option>
+            <option value="Auto 2">Auto 2</option>
+            <option value="Auto 3">Auto 3</option>
+            <option value="Auto 4">Auto 4</option>
+            <option value="Photo 1">Photo 1</option>
+            <option value="Photo 2">Photo 2</option>
+          </select>
+          <select id="log-type" style="flex:1;min-width:100px">
+            <option value="water">💧 Water</option>
+            <option value="feed">🧪 Feeding</option>
+            <option value="note">📝 Note</option>
+          </select>
+        </div>
+        <textarea id="log-text" placeholder="e.g. Watered to runoff, pH 6.4 in / 6.3 out. Added Recharge. Week 4 top dress 4-4-4 applied..."></textarea>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-primary" onclick="addLogEntry()">Add Entry</button>
+        </div>
+      </div>
+    </div>
+    <div class="log-entries" id="log-entries">
+      <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">No entries yet. Start logging your first watering or feeding above.</p>
+    </div>
+  </div>
+
+  </div><!-- /sec-log -->
+
+  </div><!-- /main-scroll -->
+
+  <!-- BOTTOM TAB ISLAND -->
+  <div class="bottom-nav-wrap">
+    <nav class="bottom-nav" role="navigation" aria-label="Main sections">
+      <button class="nav-btn active" id="nav-plants" onclick="switchSection('plants')" aria-label="Plants">
+        <span class="nav-icon">🌱</span>
+        <span class="nav-label">Plants</span>
+      </button>
+      <button class="nav-btn" id="nav-care" onclick="switchSection('care')" aria-label="Care">
+        <span class="nav-icon">🧪</span>
+        <span class="nav-label">Care</span>
+      </button>
+      <button class="nav-btn" id="nav-tasks" onclick="switchSection('tasks')" aria-label="Tasks">
+        <span class="nav-icon">✅</span>
+        <span class="nav-label">Tasks</span>
+      </button>
+      <button class="nav-btn" id="nav-log" onclick="switchSection('log')" aria-label="Log">
+        <span class="nav-icon">📓</span>
+        <span class="nav-label">Log</span>
+      </button>
+    </nav>
+  </div>
+
+</div><!-- end app-shell -->
+
+<script>
+// ── PLANT DATA ──────────────────────────────────────────────
+const START_DATE = new Date('2026-10-12');
+const plants = [
+  { id: 'a1', name: 'Auto 1', type: 'Autoflower', emoji: '🌿', tent: '3x3→4x4', totalWeeks: 11 },
+  { id: 'a2', name: 'Auto 2', type: 'Autoflower', emoji: '🌿', tent: '3x3→4x4', totalWeeks: 11 },
+  { id: 'a3', name: 'Auto 3', type: 'Autoflower', emoji: '🌱', tent: '3x3→4x4', totalWeeks: 11 },
+  { id: 'a4', name: 'Auto 4', type: 'Autoflower', emoji: '🌱', tent: '3x3→4x4', totalWeeks: 11 },
+  { id: 'p1', name: 'Photo 1', type: 'Photoperiod', emoji: '🍃', tent: '3x3', totalWeeks: 18 },
+  { id: 'p2', name: 'Photo 2', type: 'Photoperiod', emoji: '🍃', tent: '3x3', totalWeeks: 18 },
+];
+
+function currentWeek() {
+  const now = new Date();
+  return Math.max(1, Math.ceil((now - START_DATE) / (7 * 24 * 3600 * 1000)));
+}
+
+function addDays(d, n) {
+  const r = new Date(d); r.setDate(r.getDate() + n); return r;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// ── RENDER POT GRID ─────────────────────────────────────────
+function currentTent(plantId) {
+  // All 6 start in 3×3. At day 42 (tent split) autos move to 4×4.
+  // At day 77 (after auto harvest) photos move to 4×4.
+  const daysSinceStart = (new Date() - START_DATE) / (24 * 3600 * 1000);
+  if (plantId.startsWith('a')) {
+    return daysSinceStart >= 42 ? '4×4' : '3×3';
+  } else {
+    return daysSinceStart >= 77 ? '4×4' : '3×3';
+  }
+}
+
+function renderPotGrid() {
+  const wk = currentWeek();
+  const grid = document.getElementById('pot-grid');
+  grid.innerHTML = plants.map(p => {
+    const tentLabel = currentTent(p.id);
+    const tentClass = tentLabel === '4×4' ? 'tent-4x4' : 'tent-3x3';
+    return `<div class="pot-card">
+      <div class="pot-tent-badge ${tentClass}">${tentLabel}</div>
+      <div class="pot-emoji">${p.emoji}</div>
+      <div class="pot-name">${p.name}</div>
+      <div class="pot-type">${p.type}</div>
+      <div class="pot-week">Wk ${wk}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER HARVEST GRID ─────────────────────────────────────
+function renderHarvestGrid() {
+  const grid = document.getElementById('harvest-grid');
+  grid.innerHTML = plants.map(p => {
+    const harvestDate = addDays(START_DATE, p.totalWeeks * 7);
+    const now = new Date();
+    const daysLeft = Math.max(0, Math.ceil((harvestDate - now) / (24 * 3600 * 1000)));
+    const elapsed = (now - START_DATE) / (24 * 3600 * 1000);
+    const total = p.totalWeeks * 7;
+    const pct = Math.min(100, Math.round((elapsed / total) * 100));
+    return `<div class="harvest-card">
+      <div class="harvest-plant">${p.name}</div>
+      <div class="harvest-days">${daysLeft}</div>
+      <div class="harvest-label">days to est. harvest · ${formatDate(harvestDate)}</div>
+      <div class="harvest-bar-wrap">
+        <div class="harvest-progress"><div class="harvest-fill" style="width:${pct}%"></div></div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:3px">${pct}% through cycle</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHECKLIST DATA ──────────────────────────────────────────
+const checklists = {
+  '1': {
+    title: 'Week 1–2 — Seedling Tasks',
+    sections: [
+      { name: 'Daily', items: [
+        { text: 'Check seedlings for germination progress', tag: 'both' },
+        { text: 'Mist humidity dome if present (keep inside humid)', tag: 'both' },
+        { text: 'Check soil surface — water only if bone dry in top ½"', sub: 'Small amounts in ring around stem only', tag: 'both' },
+        { text: 'Verify temp 75–80°F and RH 65–70%', tag: 'both' },
+        { text: 'Check light distance: 26–30" from canopy', tag: 'both' },
+      ]},
+      { name: 'Weekly', items: [
+        { text: 'Note seedling height and node count', tag: 'both' },
+        { text: 'Check for damping off (stem pinching at soil line)', sub: 'Increase airflow slightly if seen', tag: 'both' },
+        { text: 'No nutrients this week — plain pH 6.3–6.5 water only', tag: 'both' },
+        { text: 'Optional: ½ tsp Recharge per gallon at first watering', tag: 'both' },
+      ]},
+    ]
+  },
+  '3': {
+    title: 'Week 3–4 — Early Veg Tasks',
+    sections: [
+      { name: 'Daily', items: [
+        { text: 'Lift pots to gauge water weight — water when light', tag: 'both' },
+        { text: 'Check for first signs of hunger (light yellowing lower leaves)', tag: 'both' },
+        { text: 'Check VPD: aim for 0.9–1.0 kPa', sub: '75°F / 60% RH hits ~0.98 kPa', tag: 'both' },
+        { text: 'Inspect leaf undersides for spider mites or fungus gnats', tag: 'both' },
+      ]},
+      { name: 'This Week', items: [
+        { text: 'Ramp light to 40–50%, lower to 22–24"', tag: 'both' },
+        { text: 'If hunger signs: first top dress 1 tbsp 4-4-4 per gal + ¼ cup castings', sub: 'Scratch lightly into top ½" then water in', tag: 'both' },
+        { text: 'Begin LST (low-stress training) on photos if desired', sub: 'Do NOT top autos', tag: 'photo' },
+        { text: 'Autos: observe pre-flower sites forming — do not stress', tag: 'auto' },
+        { text: 'Add Recharge once this week at ½ tsp/gal', tag: 'both' },
+      ]},
+    ]
+  },
+  '5': {
+    title: 'Week 5–6 — Peak Veg / The Split',
+    sections: [
+      { name: '⚠️ Big Week — Tent Split Happens', items: [
+        { text: 'Monitor autos for clear pre-flower / early bud sites', sub: 'When bud sites obvious → time to split tents', tag: 'auto' },
+        { text: 'Move photos to 3×3 / 250w at 18/6', tag: 'photo' },
+        { text: 'Flip 4×4 to 12/12 for autos', tag: 'auto' },
+        { text: 'Clean and prep 3×3 tent before photo move', tag: 'photo' },
+      ]},
+      { name: 'Feeding', items: [
+        { text: 'Second veg top dress: 1–1.5 tbsp 4-4-4 per gal + castings', tag: 'photo' },
+        { text: 'Autos: apply pre-flip top dress: 50/50 4-4-4 + 2-8-4 at 1 tbsp each per gal', sub: 'Do this 1 week before or at flip', tag: 'auto' },
+        { text: 'Recharge once this week', tag: 'both' },
+      ]},
+      { name: 'Training', items: [
+        { text: 'Photos: continue LST, tuck and tie for even canopy', tag: 'photo' },
+        { text: 'Autos: support any heavy branches before stretch begins', tag: 'auto' },
+        { text: 'Ramp light to 60–70% in 3×3 for stretch prep (autos still here pre-split)', tag: 'auto' },
+      ]},
+    ]
+  },
+  '7': {
+    title: 'Week 7 — Pre-Flip / Transition (Photos)',
+    sections: [
+      { name: 'Feeding', items: [
+        { text: 'Photos: transition top dress 50/50 blend — 1 tbsp 4-4-4 + 1 tbsp 2-8-4 per gal', sub: 'Apply 7–10 days before flipping to 12/12', tag: 'photo' },
+        { text: 'Add worm castings on top after amendment', tag: 'photo' },
+        { text: 'Autos: mid-flower — 1 tbsp 2-8-4 per gal if due for feeding', tag: 'auto' },
+        { text: 'Recharge application for both tents', tag: 'both' },
+      ]},
+      { name: 'Environment', items: [
+        { text: 'Begin dropping RH in auto tent: target 48–52%', tag: 'auto' },
+        { text: 'Check for early bud rot in dense auto sites', sub: 'Squeeze stems slightly — any mushiness = investigate', tag: 'auto' },
+        { text: 'Photos: maintain 18/6 at 18–22" in 3×3', tag: 'photo' },
+      ]},
+    ]
+  },
+  '8': {
+    title: 'Week 8–9 — Early Flower (Autos)',
+    sections: [
+      { name: 'Autos — Flowering', items: [
+        { text: 'Check trichomes weekly with loupe or USB scope', sub: 'Mostly clear at this stage — watching for cloudy', tag: 'auto' },
+        { text: 'Final feeding: 1 tbsp 2-8-4 per gal (last amendment for autos)', sub: 'Week 10–11 is the cutoff — no feeding after', tag: 'auto' },
+        { text: 'Light at 85–90%, 16–18" from canopy', tag: 'auto' },
+        { text: 'RH: push down to 45–50% — critical for bud quality and rot prevention', tag: 'auto' },
+        { text: 'Defoliate lightly: remove leaves blocking bud sites', sub: 'Remove fan leaves once — don\'t over-strip', tag: 'auto' },
+      ]},
+      { name: 'Photos — Holding Veg', items: [
+        { text: 'Continue LST and training in 3×3', tag: 'photo' },
+        { text: 'Maintain 65–70% light intensity at 18/6', tag: 'photo' },
+        { text: 'Top dress 4-4-4 if plant looks hungry (you have weeks left to veg)', tag: 'photo' },
+      ]},
+    ]
+  },
+  '10': {
+    title: 'Week 10–11 — Mid Flower',
+    sections: [
+      { name: 'Autos — Mid/Late Flower', items: [
+        { text: 'Trichome check: looking for mostly cloudy, first amber appearing', tag: 'auto' },
+        { text: 'RH: 42–48% — your most important environmental number right now', tag: 'auto' },
+        { text: 'Final top dress if not done: 1 tbsp 2-8-4 per gal (LAST feeding)', tag: 'auto' },
+        { text: 'Plain water only from this point forward', tag: 'auto' },
+        { text: 'Light at 95–100%, 14–16"', tag: 'auto' },
+        { text: 'Watch for foxtailing (temp too high) or bud rot (RH too high)', tag: 'auto' },
+      ]},
+      { name: 'Photos — Still in 3×3', items: [
+        { text: 'Nearly ready to flip — ensure canopy is trained and even', tag: 'photo' },
+        { text: 'Final veg top dress: 50/50 transition blend if not done', tag: 'photo' },
+        { text: 'Start thinking about flip date: ~1–2 weeks away', tag: 'photo' },
+        { text: 'Clean 4×4 tent with diluted H₂O₂ in preparation', tag: 'photo' },
+      ]},
+    ]
+  },
+  '12': {
+    title: 'Week 12–14 — Late Flower',
+    sections: [
+      { name: 'Autos — Final Stretch (if not harvested)', items: [
+        { text: 'Water-only from here — no more nutrients', tag: 'auto' },
+        { text: 'Check trichomes every 2 days — looking for 15–20% amber', sub: 'Harvest window opens when amber begins', tag: 'auto' },
+        { text: 'At 15% amber: begin 2-day dark period (65–72°F / 45–55% RH)', tag: 'auto' },
+      ]},
+      { name: 'Photos — First Weeks of 12/12', items: [
+        { text: 'Plants in stretch — track height daily', sub: 'Expect 50–100% height increase', tag: 'photo' },
+        { text: 'Raise 480w fixture ahead of stretch — check distance twice weekly', tag: 'photo' },
+        { text: 'Begin early flower feeding: 1 tbsp 2-8-4 per gal', tag: 'photo' },
+        { text: 'Begin dropping RH toward 50%', tag: 'photo' },
+      ]},
+    ]
+  },
+  '15': {
+    title: 'Week 14+ — Harvest Window',
+    sections: [
+      { name: 'Harvest Protocol', items: [
+        { text: 'Trichomes: 15–20% amber = optimal for balanced effect', sub: 'More amber = more sedative/body; less = more cerebral', tag: 'both' },
+        { text: 'Initiate 48-hour dark period: 65–72°F / 45–55% RH', tag: 'both' },
+        { text: 'After dark: chop at soil line, remove large fan leaves', tag: 'both' },
+        { text: 'Hang whole plants or large branches in dry tent', sub: '60–65°F / 55–62% RH / no direct airflow', tag: 'both' },
+        { text: 'Check dry tent daily — aim for 10–14 day dry', sub: 'Buds ready when small stems snap (not bend)', tag: 'both' },
+        { text: 'Trim and move to curing jars: 62% Boveda packs', sub: 'Burp jars 2× daily for first 2 weeks', tag: 'both' },
+      ]},
+      { name: 'After Harvest', items: [
+        { text: 'Re-amend soil for next run (see Soil Guide tab)', tag: 'both' },
+        { text: 'Wipe tent walls with diluted H₂O₂', tag: 'both' },
+        { text: 'Log yield by plant in Grow Log', tag: 'both' },
+        { text: 'Update this system for next season', tag: 'both' },
+      ]},
+    ]
+  },
+};
+
+// ── PERSISTENT STORAGE HELPERS ──────────────────────────────
+// All keys are namespaced under 'growsys_' to avoid collisions
+// Works in localStorage (browser) and in file:// origin (local repo / phone)
+
+function lsGet(key, fallback) {
+  try { const v = localStorage.getItem('growsys_' + key); return v !== null ? JSON.parse(v) : fallback; } catch(e) { return fallback; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem('growsys_' + key, JSON.stringify(val)); } catch(e) {}
+}
+
+// ── CHECKLIST ────────────────────────────────────────────────
+// State: { "wk-si-ii": true/false, ... } — persisted per grow week
+function getCheckState(wk) {
+  return lsGet('chk_' + wk, {});
+}
+function setCheckState(wk, state) {
+  lsSet('chk_' + wk, state);
+}
+
+function renderChecklist() {
+  const wk = document.getElementById('week-select').value;
+  lsSet('chk_week', wk); // remember chosen week
+  const data = checklists[wk];
+  const container = document.getElementById('checklist-container');
+  if (!data) { container.innerHTML = '<p>Select a week above.</p>'; return; }
+
+  const state = getCheckState(wk);
+  let totalItems = 0, doneItems = 0;
+
+  let html = `<div class="card"><div class="card-title">${data.title} <span id="chk-progress-badge" style="margin-left:auto;font-size:12px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text-muted)"></span></div>`;
+  data.sections.forEach((sec, si) => {
+    html += `<div class="section-head">${sec.name}</div><ul class="checklist">`;
+    sec.items.forEach((item, ii) => {
+      const id = `chk-${wk}-${si}-${ii}`;
+      const checked = state[id] ? 'checked' : '';
+      const tagClass = item.tag === 'auto' ? 'tag-auto' : item.tag === 'photo' ? 'tag-photo' : 'tag-both';
+      const tagText = item.tag === 'auto' ? 'Autos' : item.tag === 'photo' ? 'Photos' : 'Both';
+      if (checked) doneItems++;
+      totalItems++;
+      html += `<li class="check-item${checked ? ' checked' : ''}">
+        <input type="checkbox" id="${id}" ${checked} onchange="onCheckChange('${wk}','${id}',this.checked)">
+        <label for="${id}">${item.text}${item.sub ? `<span class="sub">${item.sub}</span>` : ''}</label>
+        <span class="check-tag ${tagClass}">${tagText}</span>
+      </li>`;
+    });
+    html += '</ul>';
+  });
+  html += `<div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div style="flex:1;height:6px;border-radius:3px;background:var(--bg-raised);overflow:hidden">
+      <div id="chk-progress-bar" style="height:100%;border-radius:3px;background:var(--accent);transition:width 0.3s;width:${totalItems ? Math.round(doneItems/totalItems*100) : 0}%"></div>
+    </div>
+    <span id="chk-progress-label" style="font-size:11px;color:var(--text-muted);white-space:nowrap">${doneItems}/${totalItems} done</span>
+    <button onclick="clearChecklist('${wk}')" style="font-size:11px;color:var(--text-muted);background:none;border:none;padding:0;cursor:pointer;text-decoration:underline">Reset week</button>
+  </div>`;
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function onCheckChange(wk, id, checked) {
+  const state = getCheckState(wk);
+  state[id] = checked;
+  setCheckState(wk, state);
+  // update progress bar without full re-render
+  const allBoxes = document.querySelectorAll(`#checklist-container input[type=checkbox]`);
+  const done = [...allBoxes].filter(b => b.checked).length;
+  const total = allBoxes.length;
+  const bar = document.getElementById('chk-progress-bar');
+  const lbl = document.getElementById('chk-progress-label');
+  if (bar) bar.style.width = total ? Math.round(done/total*100)+'%' : '0%';
+  if (lbl) lbl.textContent = `${done}/${total} done`;
+  // style the list item
+  const li = document.getElementById(id)?.closest('li');
+  if (li) li.classList.toggle('checked', checked);
+}
+
+function clearChecklist(wk) {
+  setCheckState(wk, {});
+  renderChecklist();
+}
+
+// ── SECTION / SUB-TAB SWITCHING ─────────────────────────────
+const SECTIONS = ['plants','care','tasks','log'];
+
+function switchSection(id) {
+  SECTIONS.forEach(s => {
+    document.getElementById('nav-' + s)?.classList.toggle('active', s === id);
+    document.getElementById('sec-' + s)?.classList.toggle('active', s === id);
+  });
+  document.querySelector('.main-scroll')?.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function switchSub(section, sub) {
+  const panel = document.getElementById('sec-' + section);
+  if (!panel) return;
+  panel.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('onclick') === `switchSub('${section}','${sub}')`);
+  });
+  panel.querySelectorAll('.tab-content').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + sub);
+  });
+  if (sub === 'checklist') renderChecklist();
+  if (sub === 'calendar') initCalendar();
+}
+
+// ── GROW LOG ────────────────────────────────────────────────
+let logEntries = lsGet('log', []);
+
+function saveLog() {
+  lsSet('log', logEntries);
+}
+
+function addLogEntry() {
+  const date = document.getElementById('log-date').value || new Date().toISOString().slice(0,10);
+  const plant = document.getElementById('log-plant').value;
+  const type = document.getElementById('log-type').value;
+  const text = document.getElementById('log-text').value.trim();
+  if (!text) return;
+  logEntries.unshift({ date, plant, type, text, id: Date.now() });
+  saveLog();
+  document.getElementById('log-text').value = '';
+  renderLog();
+}
+
+function renderLog() {
+  const container = document.getElementById('log-entries');
+  if (!logEntries.length) {
+    container.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">No entries yet. Start logging your first watering or feeding above.</p>';
+    return;
+  }
+  container.innerHTML = logEntries.slice(0, 50).map(e => {
+    const typeClass = e.type === 'water' ? 'log-water' : e.type === 'feed' ? 'log-feed' : 'log-note-log';
+    const typeLabel = e.type === 'water' ? '💧 Water' : e.type === 'feed' ? '🧪 Feed' : '📝 Note';
+    return `<div class="log-entry">
+      <div class="log-entry-head">
+        <span class="log-date">${e.date}</span>
+        <span class="log-plant">${e.plant}</span>
+        <span class="log-type-badge ${typeClass}">${typeLabel}</span>
+      </div>
+      <div class="log-text">${e.text}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── CALENDAR SYSTEM ─────────────────────────────────────────
+
+// Build a map of all scheduled events for this grow
+// Key: "YYYY-MM-DD", Value: array of task objects
+function buildGrowEvents() {
+  const events = {};
+
+  function addEv(date, ev) {
+    const k = fmtKey(date);
+    if (!events[k]) events[k] = [];
+    events[k].push(ev);
+  }
+
+  function fmtKey(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  function dPlus(days) {
+    const d = new Date(START_DATE);
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+
+  // ── WATERING every 2–3 days throughout the grow ──
+  // Autos: Oct 12 → ~Dec 28 (77 days). Every 2–3 days = ~every 2.5
+  // Photos: Oct 12 → ~Feb 22 (133 days)
+  // We'll generate watering days realistically:
+  // Seedling week (wk1-2): every 3 days — small plants, small pots
+  // Veg (wk3-6): every 2–3 days
+  // Flower (wk7+): every 2 days (bigger plants drinking more)
+
+  const waterSchedule = [
+    // Seedling — every 3 days, both tents
+    { day: 2,  label: '💧 Water seedlings', sub: 'Small amount around stem, pH 6.3–6.5. No runoff yet.', type: 'water', plants: 'Both' },
+    { day: 5,  label: '💧 Water seedlings', sub: 'pH 6.3–6.5. Lift pots — water only if light.', type: 'water', plants: 'Both' },
+    { day: 8,  label: '💧 Water + Recharge', sub: '½ tsp Recharge per gallon. First biology boost.', type: 'recharge', plants: 'Both' },
+    { day: 11, label: '💧 Water seedlings', sub: 'pH 6.3–6.5. Check for damping off at soil line.', type: 'water', plants: 'Both' },
+    { day: 14, label: '💧 Water', sub: 'Week 2 complete. Watch for first true nodes.', type: 'water', plants: 'Both' },
+    // Early Veg — every 2–3 days
+    { day: 17, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. pH 6.3–6.5.', type: 'recharge', plants: 'Both' },
+    { day: 20, label: '💧 Water', sub: 'pH 6.3–6.5. Check if lower leaves yellowing (hunger signal).', type: 'water', plants: 'Both' },
+    { day: 23, label: '💧 Water', sub: 'pH 6.3–6.5. To 10% runoff now that roots are establishing.', type: 'water', plants: 'Both' },
+    { day: 26, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. pH 6.3–6.5.', type: 'recharge', plants: 'Both' },
+    { day: 29, label: '💧 Water', sub: 'pH 6.3–6.5. 10–15% runoff.', type: 'water', plants: 'Both' },
+    // Peak Veg / Split — every 2–3 days
+    { day: 32, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. pH 6.3–6.5.', type: 'recharge', plants: 'Both' },
+    { day: 35, label: '💧 Water', sub: 'pH 6.3–6.5. Autos in flower tent 12/12 now.', type: 'water', plants: 'Both' },
+    { day: 37, label: '💧 Water', sub: 'pH 6.3–6.5. Photos holding in 3×3.', type: 'water', plants: 'Both' },
+    { day: 40, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. pH 6.3–6.5.', type: 'recharge', plants: 'Both' },
+    { day: 43, label: '💧 Water', sub: 'pH 6.3–6.5. Autos stretching — watch canopy.', type: 'water', plants: 'Autos' },
+    { day: 43, label: '💧 Water', sub: 'pH 6.3–6.5. Photos 3×3.', type: 'water', plants: 'Photos' },
+    { day: 46, label: '💧 Water', sub: 'pH 6.3–6.5. Autos mid-stretch.', type: 'water', plants: 'Autos' },
+    { day: 46, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 49, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. pH 6.3–6.5. (Auto wk 7)', type: 'recharge', plants: 'Autos' },
+    { day: 49, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. pH 6.4.', type: 'recharge', plants: 'Photos' },
+    // Auto flower — every 2 days
+    { day: 51, label: '💧 Water', sub: 'pH 6.3–6.5. Buds forming. Push RH down to 48–52%.', type: 'water', plants: 'Autos' },
+    { day: 53, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Autos' },
+    { day: 53, label: '💧 Water', sub: 'pH 6.3–6.5. Photos 3×3.', type: 'water', plants: 'Photos' },
+    { day: 55, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. Last Recharge for autos.', type: 'recharge', plants: 'Autos' },
+    { day: 55, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 57, label: '💧 Water', sub: 'pH 6.3–6.5. Water only from here for autos.', type: 'water', plants: 'Autos' },
+    { day: 59, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Autos' },
+    { day: 59, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal.', type: 'recharge', plants: 'Photos' },
+    { day: 61, label: '💧 Water', sub: 'pH 6.3–6.5. Trichomes going cloudy.', type: 'water', plants: 'Autos' },
+    { day: 63, label: '💧 Water', sub: 'pH 6.3–6.5. Final weeks — water only.', type: 'water', plants: 'Autos' },
+    { day: 63, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 65, label: '💧 Water', sub: 'pH 6.3–6.5. Keep RH 42–48%.', type: 'water', plants: 'Autos' },
+    { day: 67, label: '💧 Water', sub: 'pH 6.3–6.5. Watch for amber starting.', type: 'water', plants: 'Autos' },
+    { day: 67, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal.', type: 'recharge', plants: 'Photos' },
+    { day: 69, label: '💧 Water', sub: 'pH 6.3–6.5. May be entering harvest window soon.', type: 'water', plants: 'Autos' },
+    { day: 71, label: '💧 Water', sub: 'pH 6.3–6.5. Final waterings before harvest.', type: 'water', plants: 'Autos' },
+    { day: 71, label: '💧 Water', sub: 'pH 6.3–6.5. Photos still vegging.', type: 'water', plants: 'Photos' },
+    // Photos continue after autos harvest (~day 77)
+    { day: 75, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. Photos.', type: 'recharge', plants: 'Photos' },
+    { day: 78, label: '💧 Water', sub: 'pH 6.3–6.5. Photos moving to 4×4 now.', type: 'water', plants: 'Photos' },
+    { day: 81, label: '💧 Water', sub: 'pH 6.3–6.5. Photos in 12/12 — stretch beginning.', type: 'water', plants: 'Photos' },
+    { day: 83, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal.', type: 'recharge', plants: 'Photos' },
+    { day: 85, label: '💧 Water', sub: 'pH 6.3–6.5. Photos in stretch.', type: 'water', plants: 'Photos' },
+    { day: 87, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 89, label: '💧 Water + Recharge', sub: '½ tsp Recharge/gal. Last Recharge for photos.', type: 'recharge', plants: 'Photos' },
+    { day: 91, label: '💧 Water', sub: 'pH 6.3–6.5. Buds forming on photos.', type: 'water', plants: 'Photos' },
+    { day: 93, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 95, label: '💧 Water', sub: 'pH 6.3–6.5. Photo mid-flower.', type: 'water', plants: 'Photos' },
+    { day: 97, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 99, label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 101,label: '💧 Water', sub: 'pH 6.3–6.5. Final weeks — water only.', type: 'water', plants: 'Photos' },
+    { day: 103,label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 105,label: '💧 Water', sub: 'pH 6.3–6.5. Photo late flower.', type: 'water', plants: 'Photos' },
+    { day: 107,label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 109,label: '💧 Water', sub: 'pH 6.3–6.5. Nearing harvest window.', type: 'water', plants: 'Photos' },
+    { day: 111,label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 113,label: '💧 Water', sub: 'pH 6.3–6.5. Final waterings.', type: 'water', plants: 'Photos' },
+    { day: 115,label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 117,label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+    { day: 119,label: '💧 Water', sub: 'pH 6.3–6.5. May be harvest window.', type: 'water', plants: 'Photos' },
+    { day: 121,label: '💧 Water', sub: 'pH 6.3–6.5.', type: 'water', plants: 'Photos' },
+  ];
+
+  waterSchedule.forEach(({ day, label, sub, type, plants: pl }) => {
+    addEv(dPlus(day), { icon: type === 'recharge' ? '🦠' : '💧', label, sub, type: type === 'recharge' ? 'recharge' : 'water', plants: pl });
+  });
+
+  // ── FEEDINGS ──
+  const feedEvents = [
+    // Autos
+    { day: 21, label: '🧪 Auto: Top Dress 4-4-4', sub: 'IF showing hunger: 1.5 tbsp 4-4-4 per 3-gal pot + ¼ cup castings. Scratch in top ½", water in.', type: 'feed', plants: 'Autos' },
+    { day: 35, label: '🧪 Auto: Top Dress 4-4-4 (veg push)', sub: '2 tbsp 4-4-4 per 3-gal pot + ¼ cup castings. Support peak veg growth.', type: 'feed', plants: 'Autos' },
+    { day: 42, label: '🧪 Auto: Pre-Flip Transition Feed', sub: '1.5 tbsp 4-4-4 + 1.5 tbsp 2-8-4 per 3-gal pot (50/50 blend). Apply before or at 12/12 flip.', type: 'feed', plants: 'Autos' },
+    { day: 56, label: '🧪 Auto: First Flower Feed 2-8-4', sub: '1.5 tbsp 2-8-4 per 3-gal pot + ¼ cup castings. Bud development fuel.', type: 'feed', plants: 'Autos' },
+    { day: 70, label: '🧪 Auto: FINAL Feed 2-8-4', sub: '1.5 tbsp 2-8-4 per 3-gal pot. LAST AMENDMENT for autos — water only after this.', type: 'feed', plants: 'Autos' },
+    // Photos
+    { day: 25, label: '🧪 Photo: Top Dress 4-4-4', sub: 'IF showing hunger: 1.5 tbsp 4-4-4 per 3-gal pot + ¼ cup castings.', type: 'feed', plants: 'Photos' },
+    { day: 39, label: '🧪 Photo: Top Dress 4-4-4 (veg push)', sub: '2 tbsp 4-4-4 per 3-gal pot + ¼ cup castings. Support sustained veg.', type: 'feed', plants: 'Photos' },
+    { day: 70, label: '🧪 Photo: Transition Feed 50/50', sub: '1.5 tbsp 4-4-4 + 1.5 tbsp 2-8-4 per 3-gal. Apply ~1 week before flipping photos.', type: 'feed', plants: 'Photos' },
+    { day: 84, label: '🧪 Photo: First Flower Feed 2-8-4', sub: '1.5 tbsp 2-8-4 per 3-gal + ¼ cup castings. Early flower bud sites forming.', type: 'feed', plants: 'Photos' },
+    { day: 98, label: '🧪 Photo: FINAL Feed 2-8-4', sub: '1.5 tbsp 2-8-4 per 3-gal. LAST AMENDMENT for photos — water only after this.', type: 'feed', plants: 'Photos' },
+  ];
+
+  feedEvents.forEach(({ day, label, sub, type, plants: pl }) => {
+    addEv(dPlus(day), { icon: '🧪', label, sub, type, plants: pl });
+  });
+
+  // ── PERIODIC CHECKS ──
+  const checkEvents = [
+    // Weekly trichome checks start at week 7 for autos, week 9 for photos
+    { day: 7,  label: '🔍 Weekly Check', sub: 'Inspect seedlings — node count, stem thickness, color. Check for damping off.', type: 'check', plants: 'Both' },
+    { day: 14, label: '🔍 Weekly Check', sub: 'Height, node spacing, color check. Verify light distance 22–24".', type: 'check', plants: 'Both' },
+    { day: 21, label: '🔍 Weekly Check', sub: 'Look for hunger signs on lower leaves. LST on photos if desired.', type: 'check', plants: 'Both' },
+    { day: 28, label: '🔍 Weekly Check', sub: 'Check for pests (leaf undersides), mites, gnats. Verify pH runoff 6.2–6.8.', type: 'check', plants: 'Both' },
+    { day: 35, label: '🔍 Weekly Check + Pre-Flower Watch', sub: 'Autos: watch for pre-flower signs. Photos: assess training, canopy evenness.', type: 'check', plants: 'Both' },
+    { day: 42, label: '🔍 TENT SPLIT CHECK', sub: 'Autos showing pistils? Move photos to 3×3. Flip 4×4 to 12/12 for autos.', type: 'check', plants: 'Both' },
+    { day: 49, label: '🔍 Weekly Check', sub: 'Autos: bud sites forming? Stretch starting. Check canopy to light distance every 2 days.', type: 'check', plants: 'Both' },
+    { day: 56, label: '🔍 Trichome Check (Autos)', sub: 'Begin weekly trichome checks on autos. Looking for clear → cloudy transition.', type: 'check', plants: 'Autos' },
+    { day: 56, label: '🔍 Photo Canopy Check', sub: 'Assess photo canopy in 3×3. Last chance to LST before flip date.', type: 'check', plants: 'Photos' },
+    { day: 63, label: '🔍 Trichome Check (Autos)', sub: 'Trichomes: mostly clear still normal. Watch for bud rot in dense sites.', type: 'check', plants: 'Autos' },
+    { day: 63, label: '🔍 Photo Veg Check', sub: 'Verify photos 18/6 in 3×3. Any early pre-flowers = normal, not triggering flower.', type: 'check', plants: 'Photos' },
+    { day: 70, label: '🔍 Trichome Check (Autos)', sub: 'Looking for cloudy trichomes. Any amber? Harvest window may be close.', type: 'check', plants: 'Autos' },
+    { day: 74, label: '🔍 Trichome Check (Autos)', sub: '15% amber = harvest. Begin 48-hr dark if ready.', type: 'check', plants: 'Autos' },
+    { day: 77, label: '🔍 Trichome Check — Final', sub: 'Last call for autos. If 15–20% amber → initiate dark period.', type: 'check', plants: 'Autos' },
+    { day: 84, label: '🔍 Photo Stretch Check', sub: 'Photos in 12/12 — measure daily. Raise 480w fixture ahead of stretch. Check bud sites.', type: 'check', plants: 'Photos' },
+    { day: 91, label: '🔍 Photo Bud Check', sub: 'Buds forming. Defoliate leaves blocking bud sites. Check RH (target 48–52%).', type: 'check', plants: 'Photos' },
+    { day: 98, label: '🔍 Trichome Check (Photos)', sub: 'Begin weekly trichome watch. Mostly clear at this stage — building toward cloudy.', type: 'check', plants: 'Photos' },
+    { day: 105,label: '🔍 Trichome Check (Photos)', sub: 'Trichomes going cloudy. Push RH to 42–48%. Check for bud rot daily.', type: 'check', plants: 'Photos' },
+    { day: 112,label: '🔍 Trichome Check (Photos)', sub: 'First amber appearing? Harvest window may be 1–2 weeks out.', type: 'check', plants: 'Photos' },
+    { day: 116,label: '🔍 Trichome Check (Photos)', sub: 'At 15% amber → initiate 48-hr dark period.', type: 'check', plants: 'Photos' },
+    { day: 120,label: '🔍 Trichome Check — Final', sub: 'Last call. 15–20% amber = optimal harvest window.', type: 'check', plants: 'Photos' },
+  ];
+
+  checkEvents.forEach(({ day, label, sub, type, plants: pl }) => {
+    addEv(dPlus(day), { icon: '🔍', label, sub, type, plants: pl });
+  });
+
+  // ── KEY EVENTS ──
+  const keyEvents = [
+    { day: 0,  label: '🌱 Seeds Sprouting', sub: 'All 6 plants popped Oct 12. Start date — Week 1 begins.', type: 'event', plants: 'Both' },
+    { day: 35, label: '⚡ Watch: Auto Pre-Flowers', sub: 'Autos may show pistils around now. When confirmed, initiate tent split.', type: 'event', plants: 'Autos' },
+    { day: 42, label: '⚡ TENT SPLIT + Flip 4×4 to 12/12', sub: 'Move photos to 3×3/250w at 18/6. Flip 4×4 to 12/12 for autos. ~Nov 23.', type: 'event', plants: 'Both' },
+    { day: 73, label: '⚡ 48-HR DARK — Autos (est.)', sub: 'Initiate dark period when 15% amber trichomes confirmed. ~Dec 24.', type: 'event', plants: 'Autos' },
+    { day: 75, label: '⚡ AUTO HARVEST (est.)', sub: 'Hang autos in dry tent. 60–65°F / 55–62% RH. No direct airflow on buds.', type: 'event', plants: 'Autos' },
+    { day: 77, label: '⚡ Move Photos to 4×4 / Flip to 12/12', sub: 'After auto harvest, photos move to 480w tent. Flip to 12/12. ~Dec 28.', type: 'event', plants: 'Photos' },
+    { day: 118,label: '⚡ 48-HR DARK — Photos (est.)', sub: 'Initiate dark period when 15% amber trichomes confirmed. ~Feb 7.', type: 'event', plants: 'Photos' },
+    { day: 120,label: '⚡ PHOTO HARVEST (est.)', sub: 'Hang photos in dry tent. 60–65°F / 55–62% RH. ~Feb 9.', type: 'event', plants: 'Photos' },
+  ];
+
+  keyEvents.forEach(({ day, label, sub, type, plants: pl }) => {
+    addEv(dPlus(day), { icon: '⚡', label, sub, type, plants: pl });
+  });
+
+  return events;
+}
+
+const GROW_EVENTS = buildGrowEvents();
+let calYear, calMonth, calSelectedDate;
+
+function initCalendar() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  calSelectedDate = null;
+  renderCalendar();
+}
+
+function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`;
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth + 1, 0);
+  const startDow = firstDay.getDay(); // 0=Sun
+
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  // blank cells before first day
+  for (let i = 0; i < startDow; i++) {
+    html += `<div class="cal-day other-month"></div>`;
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date = new Date(calYear, calMonth, d);
+    const key = date.toISOString().slice(0,10);
+    const isToday = date.getTime() === today.getTime();
+    const isSel = calSelectedDate === key;
+    const evs = GROW_EVENTS[key] || [];
+
+    let dotsHtml = evs.slice(0, 4).map(e => {
+      const cls = e.type === 'water' ? 'dot-water' : e.type === 'feed' ? 'dot-feed' : e.type === 'recharge' ? 'dot-recharge' : e.type === 'check' ? 'dot-check' : 'dot-event';
+      const short = e.type === 'water' ? '💧' : e.type === 'feed' ? '🧪' : e.type === 'recharge' ? '🦠' : e.type === 'check' ? '🔍' : '⚡';
+      return `<span class="cal-dot ${cls}">${short} ${e.plants}</span>`;
+    }).join('');
+    if (evs.length > 4) dotsHtml += `<span class="cal-dot dot-check">+${evs.length-4}</span>`;
+
+    html += `<div class="cal-day${isToday?' today':''}${isSel?' selected':''}" onclick="calSelect('${key}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-dots">${dotsHtml}</div>
+    </div>`;
+  }
+
+  // fill remaining cells
+  const totalCells = startDow + lastDay.getDate();
+  const remainder = totalCells % 7;
+  if (remainder > 0) {
+    for (let i = 0; i < 7 - remainder; i++) html += `<div class="cal-day other-month"></div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
+  if (calSelectedDate) renderCalDetail(calSelectedDate);
+}
+
+function calSelect(key) {
+  calSelectedDate = key;
+  renderCalendar();
+  renderCalDetail(key);
+}
+
+function renderCalDetail(key) {
+  const d = new Date(key + 'T12:00:00');
+  const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  document.getElementById('cal-detail-date').textContent = label;
+
+  const evs = GROW_EVENTS[key] || [];
+  const body = document.getElementById('cal-detail-body');
+  if (!evs.length) {
+    body.innerHTML = '<p class="cal-detail-empty">No scheduled tasks — rest day or off-cycle. Check soil weight.</p>';
+    return;
+  }
+
+  body.innerHTML = evs.map(e => {
+    const iconMap = { water: '💧', feed: '🧪', recharge: '🦠', check: '🔍', event: '⚡' };
+    const tagCls = e.type === 'water' ? 'dot-water' : e.type === 'feed' ? 'dot-feed' : e.type === 'recharge' ? 'dot-recharge' : e.type === 'check' ? 'dot-check' : 'dot-event';
+    return `<div class="cal-task">
+      <span class="cal-task-icon">${iconMap[e.type] || '📌'}</span>
+      <div class="cal-task-body">
+        <div class="cal-task-title">${e.label} <span class="cal-dot ${tagCls}" style="font-size:9px;vertical-align:middle">${e.plants}</span></div>
+        <div class="cal-task-sub">${e.sub}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── INIT ────────────────────────────────────────────────────
+// Set default log date to today
+const today = new Date().toISOString().slice(0,10);
+document.getElementById('log-date').value = today;
+
+// Set season label
+const wk = currentWeek();
+document.getElementById('season-label').textContent = `Season 1 · Week ${wk}`;
+
+renderPotGrid();
+renderHarvestGrid();
+
+// Restore saved week selection before rendering checklist
+(function() {
+  const savedWk = lsGet('chk_week', null);
+  const sel = document.getElementById('week-select');
+  if (savedWk && sel) {
+    // find matching option
+    const opt = [...sel.options].find(o => o.value === savedWk);
+    if (opt) sel.value = savedWk;
+  }
+})();
+
+renderChecklist();
+renderLog();
+// Calendar initializes on tab open to keep startup fast
+</script>
+
+</body></html>
